@@ -7,7 +7,7 @@ RUN test ! -z "${CANTALOUPE_VERSION}" \
     && apt install -y curl unzip \
     && curl -OL https://github.com/cantaloupe-project/cantaloupe/releases/download/v${CANTALOUPE_VERSION}/cantaloupe-${CANTALOUPE_VERSION}.zip \
     && unzip cantaloupe-${CANTALOUPE_VERSION}.zip \
-    && mkdir -p root/cantaloupe root/usr/lib/x86_64-linux-gnu \
+    && mkdir -p root/cantaloupe root/usr/lib/x86_64-linux-gnu root/var/log/cantaloupe root/var/cache/cantaloupe \
     && mv cantaloupe-${CANTALOUPE_VERSION}/cantaloupe-${CANTALOUPE_VERSION}.jar root/cantaloupe/cantaloupe.jar \
     && sed \
         -e "s+^FilesystemSource.BasicLookupStrategy.path_prefix =.*+FilesystemSource.BasicLookupStrategy.path_prefix = /data/\r+g" \
@@ -19,6 +19,6 @@ FROM gcr.io/distroless/java11-debian11:latest
 ENV JDK_JAVA_OPTIONS="-Dcantaloupe.config=/cantaloupe/cantaloupe.properties -Xmx2g"
 WORKDIR /cantaloupe
 COPY --from=build-env /work/root/ /
-VOLUME ["/data", "/var/cache/cantaloupe", "/var/log/cantaloupe"]
+VOLUME ["/data"]
 EXPOSE 8182
 CMD ["/cantaloupe/cantaloupe.jar"]
