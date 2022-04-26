@@ -22,9 +22,9 @@ check_version () {
 
     if [ "${CURRENT_VERSION}" != "${LATEST_VERSION}" ]; then
         echo "The Latest version has been released."
-	echo "- ${PROJECT}: ${LATEST_VERSION}"
-	echo ""
-	return 1
+        echo "- https://github.com/${PROJECT} - ${LATEST_VERSION}"
+        echo ""
+        return 1
     fi
 
     return 0
@@ -42,10 +42,9 @@ check_image () {
     local FOUND_LAYER_ID=$(echo ${TARGET_JSON} | jq ".Layers[] | select(. == ${BASE_LAYER_ID})")
 
     if [ "${BASE_LAYER_ID}" != "${FOUND_LAYER_ID}" ]; then
-        echo "The base Docker image has been updated."
-        echo "- ${BASE_CONTAINER}"
-        echo "The inherited Docker image needs to be updated."
+        echo "The Docker image needs to be updated."
         echo "- ${TARGET_CONTAINER}"
+        echo "  |- ${BASE_CONTAINER}  [newer version found]"
         echo ""
         return 1
     fi
