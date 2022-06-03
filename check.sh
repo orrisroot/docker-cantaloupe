@@ -8,7 +8,7 @@ REQUIRED_COMMANDS=("skopeo" "jq" "basename")
 
 cd $(dirname $0)
 
-for COMMAND in "${REQUIRED_COMMANDS}"; do
+for COMMAND in "${REQUIRED_COMMANDS[@]}"; do
     if ! command -v ${COMMAND} > /dev/null; then
         echo "Error: ${COMMAND} command is required." 1>&2
         exit 2
