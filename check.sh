@@ -34,12 +34,12 @@ check_version () {
 check_image () {
     local BASE_CONTAINER=$1
     local TARGET_CONTAINER=$2
-    local BASE_JSON=$(skopeo inspect docker://${BASE_CONTAINER})
+    local BASE_JSON=$(skopeo inspect --config docker://${BASE_CONTAINER})
     [ $? -eq 0 ] || return $?
-    local TARGET_JSON=$(skopeo inspect docker://${TARGET_CONTAINER})
+    local TARGET_JSON=$(skopeo inspect --config docker://${TARGET_CONTAINER})
     [ $? -eq 0 ] || return $?
-    local BASE_LAYER_ID=$(echo ${BASE_JSON} | jq "(.Layers | reverse)[0]")
-    local FOUND_LAYER_ID=$(echo ${TARGET_JSON} | jq ".Layers[] | select(. == ${BASE_LAYER_ID})")
+    local BASE_LAYER_ID=$(echo ${BASE_JSON} | jq "(.rootfs.diff_ids | reverse)[0]")
+    local FOUND_LAYER_ID=$(echo ${TARGET_JSON} | jq ".rootfs.diff_ids[] | select(. == ${BASE_LAYER_ID})")
 
     if [ "${BASE_LAYER_ID}" != "${FOUND_LAYER_ID}" ]; then
         echo "The Docker image needs to be updated."
