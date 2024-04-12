@@ -2,7 +2,7 @@
 
 IMAGE=orrisroot/cantaloupe
 REGISTORY=docker.io/${IMAGE}
-VERSION=5.0.5
+VERSION=5.0.6
 
 docker build --pull --force-rm --build-arg CANTALOUPE_VERSION=${VERSION} -t ${IMAGE}:latest .
 if [ $? -ne 0 ]; then
