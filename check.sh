@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASE_IMAGE="gcr.io/distroless/java17-debian11:latest"
+BASE_IMAGE="gcr.io/distroless/java25-debian13:latest"
 TARGET_IMAGE="docker.io/orrisroot/cantaloupe:latest"
 GITHUB_PROJECT="cantaloupe-project/cantaloupe"
 

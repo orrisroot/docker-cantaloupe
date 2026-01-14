@@ -1,4 +1,4 @@
-FROM docker.io/library/openjdk:17-jdk-slim-bullseye AS build-env
+FROM docker.io/library/debian:trixie-slim AS build-env
 ARG CANTALOUPE_VERSION=""
 ENV CANTALOUPE_VERSION=${CANTALOUPE_VERSION}
 WORKDIR /work
@@ -15,7 +15,7 @@ RUN test ! -z "${CANTALOUPE_VERSION}" \
         cantaloupe-${CANTALOUPE_VERSION}/cantaloupe.properties.sample > root/cantaloupe/cantaloupe.properties \
     && mv cantaloupe-${CANTALOUPE_VERSION}/deps/Linux-x86-64/lib/* root/usr/lib/x86_64-linux-gnu/
 
-FROM gcr.io/distroless/java17-debian11:latest
+FROM gcr.io/distroless/java25-debian13:latest
 ENV JDK_JAVA_OPTIONS="-Dcantaloupe.config=/cantaloupe/cantaloupe.properties -Xmx2g"
 WORKDIR /cantaloupe
 COPY --from=build-env /work/root/ /
