@@ -9,10 +9,8 @@ on:
     paths:
       - Dockerfile
       - .github/workflows/build.yml
+  # Run on every PR (no paths filter) so that the required "build" check is always reported
   pull_request:
-    paths:
-      - Dockerfile
-      - .github/workflows/build.yml
   workflow_dispatch:
 
 permissions:
