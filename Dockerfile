@@ -1,5 +1,6 @@
-FROM docker.io/library/debian:trixie-slim AS build-env
-ARG CANTALOUPE_VERSION=""
+FROM docker.io/library/debian:trixie-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2 AS build-env
+# renovate: datasource=github-releases depName=cantaloupe-project/cantaloupe extractVersion=^v(?<version>.+)$
+ARG CANTALOUPE_VERSION=5.0.8
 ENV CANTALOUPE_VERSION=${CANTALOUPE_VERSION}
 WORKDIR /work
 RUN test ! -z "${CANTALOUPE_VERSION}" \
@@ -13,9 +14,12 @@ RUN test ! -z "${CANTALOUPE_VERSION}" \
         -e "s+^FilesystemSource.BasicLookupStrategy.path_prefix =.*+FilesystemSource.BasicLookupStrategy.path_prefix = /data/\r+g" \
         -e "s+/path/to/logs/+/var/log/cantaloupe/+g" \
         cantaloupe-${CANTALOUPE_VERSION}/cantaloupe.properties.sample > root/cantaloupe/cantaloupe.properties \
+    && grep -q "^FilesystemSource.BasicLookupStrategy.path_prefix = /data/" root/cantaloupe/cantaloupe.properties \
+    && grep -q "/var/log/cantaloupe/" root/cantaloupe/cantaloupe.properties \
+    && ! grep -q "/path/to/logs/" root/cantaloupe/cantaloupe.properties \
     && mv cantaloupe-${CANTALOUPE_VERSION}/deps/Linux-x86-64/lib/* root/usr/lib/x86_64-linux-gnu/
 
-FROM gcr.io/distroless/java25-debian13:latest
+FROM gcr.io/distroless/java25-debian13:latest@sha256:6558dff7db91bf89d34254014dec8ff1f0a3e13f48a575d5a51ce01d1597d671
 ENV JDK_JAVA_OPTIONS="-Dcantaloupe.config=/cantaloupe/cantaloupe.properties -Xmx2g"
 WORKDIR /cantaloupe
 COPY --from=build-env /work/root/ /

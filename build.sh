@@ -1,18 +1,22 @@
 #!/bin/bash
 
-IMAGE=orrisroot/cantaloupe
-REGISTORY=docker.io/${IMAGE}
-VERSION=5.0.7
+set -euo pipefail
 
-docker build --pull --force-rm --build-arg CANTALOUPE_VERSION=${VERSION} -t ${IMAGE}:latest .
-if [ $? -ne 0 ]; then
-    echo "Build error occured."
+IMAGE=orrisroot/cantaloupe
+DIR=$(cd "$(dirname "$0")" && pwd)
+# Read the version from ARG CANTALOUPE_VERSION in Dockerfile (updated by Renovate)
+VERSION=$(sed -n 's/^ARG CANTALOUPE_VERSION=//p' "${DIR}/Dockerfile")
+
+if ! [[ "${VERSION}" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+    echo "Invalid CANTALOUPE_VERSION in Dockerfile: '${VERSION}'" 1>&2
     exit 1
 fi
-IMAGE_ID=$(docker image ls orrisroot/cantaloupe:latest -q)
-docker image tag ${IMAGE_ID} ${IMAGE}:${VERSION}
 
-#docker login
+if ! docker build --force-rm -t "${IMAGE}:latest" "${DIR}"; then
+    echo "Build error occured." 1>&2
+    exit 1
+fi
+docker image tag "${IMAGE}:latest" "${IMAGE}:${VERSION}"
+
 echo ""
-echo "Done! To push built images, run the following command."
-echo "docker image push --all-tags ${IMAGE}"
+echo "Done! Built ${IMAGE}:latest and ${IMAGE}:${VERSION}."
