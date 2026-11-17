@@ -1,0 +1,91 @@
+name: Build and push
+
+# Updates of the base images and cantaloupe are detected by Renovate (see renovate.json).
+# Renovate opens a PR updating Dockerfile -> the PR is build-checked and smoke-tested
+# -> merged into main -> pushed.
+on:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - .github/workflows/build.yml
+  pull_request:
+    paths:
+      - Dockerfile
+      - .github/workflows/build.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  IMAGE: docker.io/orrisroot/cantaloupe
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Read cantaloupe version from Dockerfile
+        id: version
+        run: |
+          version=$(sed -n 's/^ARG CANTALOUPE_VERSION=//p' Dockerfile)
+          if ! [[ "$version" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+            echo "::error::Invalid CANTALOUPE_VERSION in Dockerfile: '$version'"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          no-cache: true
+          load: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ steps.version.outputs.version }}
+
+      - name: Smoke test
+        env:
+          TEST_IMAGE: ${{ env.IMAGE }}:${{ steps.version.outputs.version }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/data"
+          # 1x1 PNG served from /data to verify the image source directory
+          echo 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' \
+            | base64 -d > "$RUNNER_TEMP/data/test.png"
+          docker run -d --name smoke-test -p 8182:8182 -v "$RUNNER_TEMP/data:/data:ro" "$TEST_IMAGE"
+          url=http://localhost:8182/iiif/3/test.png/info.json
+          for i in $(seq 1 30); do
+            if curl -sf "$url" > info.json; then
+              echo "Smoke test passed"
+              cat info.json
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::Smoke test failed: $url did not respond successfully"
+          docker logs smoke-test
+          exit 1
+
+      - uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push
+        if: github.event_name != 'pull_request'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          docker image push "$IMAGE:$VERSION"
+          docker image push "$IMAGE:latest"
