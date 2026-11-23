@@ -19,7 +19,7 @@ RUN test ! -z "${CANTALOUPE_VERSION}" \
     && ! grep -q "/path/to/logs/" root/cantaloupe/cantaloupe.properties \
     && mv cantaloupe-${CANTALOUPE_VERSION}/deps/Linux-x86-64/lib/* root/usr/lib/x86_64-linux-gnu/
 
-FROM gcr.io/distroless/java25-debian13:latest@sha256:c5837324f25f1222828bb1741d62f83f179d5b63a7e0349bbf3a2c6e2fae5ea6
+FROM gcr.io/distroless/java25-debian13:latest@sha256:d1b024b25b9dd0a363c14e2927e8059c94bff102f2e2a645eb849ea36766292a
 ENV JDK_JAVA_OPTIONS="-Dcantaloupe.config=/cantaloupe/cantaloupe.properties -Xmx2g"
 WORKDIR /cantaloupe
 COPY --from=build-env /work/root/ /
